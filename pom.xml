@@ -95,14 +95,14 @@
 	<distributionManagement>
 	    <repository>
 	      <id>nexus</id>
-	      <name>Landmark Technologies Releases Nexus Repository</name>
-	      <url>http://100.26.133.141:8081/repository/paypal-releases/</url>
+	      <name>Tesla-re</name>
+	      <url>http://localhost:8081/repository/Tesla-re/</url>
 	    </repository>
 	    
 	    <snapshotRepository>
 	      <id>nexus</id>
-	      <name>Landmark Technologies Snapshot Nexus Repository </name>
-	      <url>http://18.118.29.219:8081/repository/paypal-snapshots/</url>
+	      <name>Tesla-sna</name>
+	      <url>http://localhost:8081/repository/Tesla-sna/</url>
 	    </snapshotRepository>
 	    
 	</distributionManagement>
