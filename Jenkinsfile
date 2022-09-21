@@ -1,54 +1,52 @@
-node
- {
-  
-  def mavenHome = tool name: "maven3.6.2"
-  
-      echo "GitHub BranhName ${env.BRANCH_NAME}"
-      echo "Jenkins Job Number ${env.BUILD_NUMBER}"
-      echo "Jenkins Node Name ${env.NODE_NAME}"
-  
-      echo "Jenkins Home ${env.JENKINS_HOME}"
-      echo "Jenkins URL ${env.JENKINS_URL}"
-      echo "JOB Name ${env.JOB_NAME}"
-  
-   properties([[$class: 'JiraProjectProperty'], buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2')), pipelineTriggers([pollSCM('* * * * *')])])
-  
-  stage("CheckOutCodeGit")
-  {
-   git branch: 'development', credentialsId: '65fb834f-a83b-4fe7-8e11-686245c47a65', url: 'https://github.com/MithunTechnologiesDevOps/maven-web-application.git'
- }
- 
- stage("Build")
- {
- sh "${mavenHome}/bin/mvn clean package"
- }
- 
-  /*
- stage("ExecuteSonarQubeReport")
- {
- sh "${mavenHome}/bin/mvn sonar:sonar"
- }
- 
- stage("UploadArtifactsintoNexus")
- {
- sh "${mavenHome}/bin/mvn deploy"
- }
- 
-  stage("DeployAppTomcat")
- {
-  sshagent(['423b5b58-c0a3-42aa-af6e-f0affe1bad0c']) {
-    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war  ec2-user@15.206.91.239:/opt/apache-tomcat-9.0.34/webapps/" 
-  }
- }
- 
- stage('EmailNotification')
- {
- mail bcc: 'mylandmarktech@gmail.com', body: '''Build is over
-
- Thanks,
- Landmark Technologies,
- +14372152483.''', cc: 'mylandmarktech@gmail.com', from: '', replyTo: '', subject: 'Build is over!!', to: 'mylandmarktech@gmail.com'
- }
- */
- 
- }
+pipeline{
+    agent any
+    tools {
+        maven "maven3.8.6"
+    }
+    stages {
+        stage('1GetCode'){
+            steps{
+                bat "echo  'cloning the latest application version' "
+                git credentialsId: 'bfead37d-3a80-486f-9bbf-7533424f1e9a', url: 'https://github.com/FutureTechn/maven-web-application-jenk'
+            }
+            
+        }
+        stage('2Built&Test'){
+            steps{
+                bat "echo 'Running Junit testing' "
+                bat "echo  'Testing must pass before continue' "
+                bat "mvn clean package"
+            }
+        }
+        stage('3codeQuality'){
+            steps{
+                bat "echo ‘Performing Code Quality’ "
+                bat "mvn sonar:sonar"
+            }
+        }
+        stage('4UploadNexus'){
+            steps{
+                bat "mvn deploy"
+            }
+        }
+        stage('5deploy2UAT'){
+            steps{
+                bat "echo 'Upload artifact to UAT' "
+                deploy adapters: [tomcat9(credentialsId: 'Tomcat-Window', path: '', url: 'http://localhost:8080/')], contextPath: null, war: 'target\\*war'
+            }
+        }
+        
+    }
+    post{
+        always{
+            emailext body: '''Please check the results ''', recipientProviders: [buildUser(), requestor(), developers()], subject: 'Success', to: 'bao@gmail.com'
+        }
+        success{
+                emailext body: '''Hey guys Good Morning ''', recipientProviders: [buildUser(), requestor(), developers()], subject: 'Success', to: 'bao@gmail.com'
+        }
+        failure{
+            emailext body: '''Hey guys Good Morning fix the issue and let me know ''', recipientProviders: [buildUser(), requestor(), developers()], subject: 'Success', to: 'bao@gmail.com'
+        } 
+    }
+}
+   
