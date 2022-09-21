@@ -1,0 +1,42 @@
+node{
+  def mavenHome = tool name: 'maven3.8.6'
+  stage('1cloneCode'){
+    git "https://github.com/FutureTechn/maven-web-application-jenk"
+  }
+  stage('2Test&Build'){
+    bat "${mavenHome}/bin/mvn clean package"
+    //bat "${mavenHome}/bin/mvn clean package"
+  }
+  stage('3codeQuality'){
+    bat "${mavenHome}/bin/mvn  sonar:sonar"
+  }
+  stage('4uploadArtifacts'){
+    //sh "${mavenHome}/bin/mvn deploy"
+    //http://52.53.227.31:8191/landmark/repository/tesla-fe-snapshots/
+    //http://52.53.227.31:8191/landmark/repository/tesla-fe-releases/
+    // vi pom.xml and added repository details   
+    // vi setting.xml and add AUTHENTICATION details  
+    ////go to pipeline syntax and get the syntax
+    "${mavenHome}/bin/mvn deploy"
+  } 
+  stage('5deploy2UAT'){
+    bat "echo 'deploy to UAT'  "
+    deploy adapters: [tomcat9(credentialsId: 'Tomcat-Window', path: '', url: 'http://localhost:8080/')], contextPath: null, war: 'target\\*war'
+  }
+  stage('6approvalGate'){
+    bat "echo 'ready for review' "
+    timeout(time:5, unit:'DAYS') {
+    input message: 'Application ready for deployment, Please review and approve'
+      }
+  }
+  stage('7deploy2Prod'){
+    //bat "sleep 50"
+    bat "timeout /t 50"
+    deploy adapters: [tomcat9(credentialsId: 'Tomcat-Window', path: '', url: 'http://localhost:8080/')], contextPath: null, war: 'target\\*war'
+  }
+  stage('8emailNotification'){
+   emailext body: '''Hi all
+Check build status
+Thanks''', recipientProviders: [buildUser(), contributor(), developers(), upstreamDevelopers()], subject: 'Build Status ', to: 'rodrigue@gmail.com'
+  }
+}
